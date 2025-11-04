@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Ignore all generated APKs and Android build outputs
+*.apk
+/android/app/build/
+/android/app/build/outputs/
+/android/app/build/outputs/apk/
