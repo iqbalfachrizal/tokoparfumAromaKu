@@ -1,15 +1,20 @@
+// cart_Screen.dart (Versi Final yang Diperbaiki)
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:aromaku/models/cart_item.dart';
-import 'package:aromaku/models/perfume.dart';
-import 'package:aromaku/services/session_manager.dart';
-import 'package:aromaku/db/database_helper.dart';
-import 'package:aromaku/api/api_service.dart';
-import 'package:aromaku/services/notification_service.dart'; 
+import 'package:arunika/models/cart_item.dart';
+import 'package:arunika/models/perfume.dart';
+import 'package:arunika/services/session_manager.dart';
+import 'package:arunika/db/database_helper.dart';
+import 'package:arunika/api/api_service.dart';
+import 'package:arunika/services/notification_service.dart'; 
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
+// PASTIKAN PATH INI SESUAI DENGAN LOKASI FILE BARU ANDA!
+// Jika file berada di folder 'screens', mungkin menjadi 'package:arunika/screens/map_selection_screen.dart';
+import 'package:arunika/screens/main/map_selection_screen.dart'; 
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -31,6 +36,12 @@ class _CartScreenState extends State<CartScreen> {
   String _selectedCurrency = 'IDR';
   double _totalPrice = 0;
 
+  // --- VARIABLE UNTUK LOKASI ---
+  String _deliveryAddress = "Pilih lokasi pengiriman...";
+  String? _selectedLatitude;
+  String? _selectedLongitude;
+  // ----------------------------------
+
   // Variabel untuk Timer
   Timer? _timer;
 
@@ -39,25 +50,22 @@ class _CartScreenState extends State<CartScreen> {
     super.initState();
     tz.initializeTimeZones();
     _loadData();
-    _startTimer(); // <-- Mulai Timer
+    _startTimer();
   }
 
   @override
   void dispose() {
-    _timer?.cancel(); // <-- Hentikan Timer saat Widget ditutup
+    _timer?.cancel();
     super.dispose();
   }
   
-  // --- FUNGSI UNTUK MEMULAI TIMER ---
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      // Panggil setState setiap 1 detik untuk memperbarui waktu
       if(mounted) {
         setState(() {});
       }
     });
   }
-  // ------------------------------------
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
@@ -157,6 +165,10 @@ class _CartScreenState extends State<CartScreen> {
     if (_selectedCurrency == 'IDR') {
       return 'Rp ${NumberFormat("#,##0", "id_ID").format(_totalPrice)}';
     }
+    // Perlu pengecekan jika kunci tidak ada, kembali ke IDR
+    if (!_rates!.containsKey(_selectedCurrency) || _rates![_selectedCurrency] == null) {
+        return 'Rate error: IDR';
+    }
     double rate = _rates![_selectedCurrency]; 
     double convertedTotal = _totalPrice * rate; 
     return NumberFormat.simpleCurrency(name: _selectedCurrency).format(convertedTotal);
@@ -178,16 +190,70 @@ London: ${format.format(london)}
       ''';
   }
 
+  // --- FUNGSI PILIH LOKASI MENGGUNAKAN MAPS BARU (OpenStreetMap) ---
+  Future<void> _selectDeliveryLocation() async {
+    if (_cartItems.isEmpty) return;
+
+    // Navigasi ke MapSelectionScreen dan tunggu hasilnya
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const MapSelectionScreen(),
+      ),
+    );
+
+    // Cek hasil yang dikembalikan dan pastikan tipe datanya benar
+    if (result != null && result is Map<String, dynamic>) {
+      if (mounted) {
+        setState(() {
+          // PERBAIKAN BARIS 204
+          _deliveryAddress = result['address'] ?? "Lokasi Tidak Dikenal";
+          // PERBAIKAN BARIS 205
+          _selectedLatitude = result['latitude']; 
+          _selectedLongitude = result['longitude'];
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lokasi dipilih: $_deliveryAddress')),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pemilihan lokasi dibatalkan.')),
+        );
+      }
+    }
+  }
+  // ------------------------------------------------------------------
+
+
   Future<void> _launchWhatsApp() async {
     if (_userId == null) return;
     
+    // CEK LOKASI DULU
+    if (_selectedLatitude == null || _deliveryAddress == "Pilih lokasi pengiriman...") {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mohon tentukan lokasi pengiriman terlebih dahulu!')),
+        );
+      }
+      return;
+    }
+
     const String waNumber = "6285600924354"; 
-    String message = "Halo Admin AromaKu, saya ingin memesan:\n\n";
+    String message = "Halo Admin arunika, saya ingin memesan:\n\n";
     for (var item in _cartItems) {
       message += "✅ ${item.perfume.name} (Qty: ${item.quantity})\n";
     }
     message += "\nTotal: ${_getConvertedPrice()} ($_selectedCurrency)";
     
+    // TAMBAHKAN DETAIL LOKASI DAN TAUTAN GOOGLE MAPS YANG DAPAT DIKLIK
+    // Kita gunakan format URL standar Google Maps untuk membuat link yang dapat diklik
+    final String mapsUrl = 
+      "https://www.google.com/maps/search/?api=1&query=$_selectedLatitude,$_selectedLongitude";
+    
+    message += "\n\nAlamat Kirim:\n $_deliveryAddress";
+    message += "\nLink Maps (Klik untuk navigasi):\n $mapsUrl"; 
+
     final String waUrl = "https://wa.me/$waNumber?text=${Uri.encodeComponent(message)}";
 
     try {
@@ -196,7 +262,7 @@ London: ${format.format(london)}
       await _notificationService.showInstantNotification(
         1,
         'Terima Kasih',
-        'Mohon segera konfirmasi ke owner by wa untuk selanjutnya',
+        'Pesanan telah dibuat. Mohon segera konfirmasi ke owner via WhatsApp.',
       );
       
       // 2. HAPUS KERANJANG DI DB
@@ -205,19 +271,19 @@ London: ${format.format(london)}
 
       // 3. BUKA WHATSAPP
       if (!await launchUrl(Uri.parse(waUrl), mode: LaunchMode.externalApplication)) {
-         throw Exception('Tidak bisa membuka WhatsApp. Pastikan WhatsApp terinstall.');
+        throw Exception('Tidak bisa membuka WhatsApp. Pastikan WhatsApp terinstall.');
       }
       
     } catch (e) {
        if(mounted) {
          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
-          );
+           SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
+         );
        }
     }
   }
   
-  // --- FUNGSI UNTUK DISPLAY WAKTU INDIVIDUAL ---
+  // FUNGSI UNTUK DISPLAY WAKTU INDIVIDUAL
   List<Widget> _buildTimeRows() {
     final timeData = _getConvertedTime().trim().split('\n');
     return timeData.map((line) {
@@ -250,10 +316,12 @@ London: ${format.format(london)}
       );
     }).toList();
   }
-  // ------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
+    // Tentukan apakah tombol WhatsApp harus dinonaktifkan
+    bool isCheckoutDisabled = _cartItems.isEmpty || _isLoading || _selectedLatitude == null;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Keranjang Saya'),
@@ -384,15 +452,15 @@ London: ${format.format(london)}
               children: [
                 // 1. HEADER MATA UANG
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Padding DIKURANGI LAGI
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), 
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.currency_exchange, color: Colors.purple, size: 18), // Ukuran ikon DIKURANGI
+                          Icon(Icons.currency_exchange, color: Colors.purple, size: 18), 
                           SizedBox(width: 8),
-                          Text('Total dalam Mata Uang', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)), // Ukuran font DIKURANGI
+                          Text('Total dalam Mata Uang', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)), 
                         ],
                       ),
                       DropdownButton<String>(
@@ -400,7 +468,7 @@ London: ${format.format(london)}
                         items: ['IDR', 'USD', 'EUR', 'JPY', 'SGD'].map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
-                            child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purple, fontSize: 12)), // Ukuran font DIKURANGI
+                            child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purple, fontSize: 12)), 
                           );
                         }).toList(),
                         onChanged: _rates == null ? null : (newValue) {
@@ -413,10 +481,9 @@ London: ${format.format(london)}
                   ),
                 ),
                 
-                // 2. PEMISAH
                 Divider(height: 1, color: Colors.grey.shade300),
                 
-                // 3. WAKTU OPERASIONAL
+                // 2. WAKTU OPERASIONAL
                 Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Column(
@@ -424,18 +491,57 @@ London: ${format.format(london)}
                     children: [
                       const Text(
                         'Waktu Toko Global (WIB, WITA, WIT)', 
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87) // Ukuran font DIKURANGI
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87) 
                       ),
                       const SizedBox(height: 4),
                       ..._buildTimeRows(),
                     ],
                   ),
                 ),
+
+                Divider(height: 1, color: Colors.grey.shade300),
+                
+                // 3. PEMILIHAN LOKASI PENGIRIMAN
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Lokasi Pengiriman', 
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        // Memanggil MapSelectionScreen
+                        onTap: _cartItems.isEmpty ? null : _selectDeliveryLocation, 
+                        child: Row(
+                          children: [
+                            Icon(Icons.location_on, size: 24, 
+                              color: _selectedLatitude == null ? Colors.red : Colors.green),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _deliveryAddress,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: _selectedLatitude == null ? Colors.grey.shade600 : Colors.black,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-          
-          // --- BAGIAN TOTAL BELANJA
+
+          // BAGIAN TOTAL BELANJA DAN TOMBOL CHECKOUT
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -457,8 +563,9 @@ London: ${format.format(london)}
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.chat),
                     label: const Text('Beli via WhatsApp', style: TextStyle(fontSize: 18)),
-                    onPressed: _cartItems.isEmpty || _isLoading ? null : _launchWhatsApp,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                    // Tombol dinonaktifkan jika keranjang kosong ATAU lokasi belum dipilih
+                    onPressed: isCheckoutDisabled ? null : _launchWhatsApp,
+                    style: ElevatedButton.styleFrom(backgroundColor: isCheckoutDisabled ? Colors.grey : Colors.green, foregroundColor: Colors.white),
                   ),
                 )
               ],

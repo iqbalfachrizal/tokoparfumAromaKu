@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:aromaku/screens/auth/login_screen.dart';
-import 'package:aromaku/screens/main/home_layout.dart';
-import 'package:aromaku/screens/splash_screen.dart';
-import 'package:aromaku/services/notification_service.dart';
-import 'package:aromaku/services/session_manager.dart';
+import 'package:arunika/screens/auth/login_screen.dart';
+import 'package:arunika/screens/main/home_layout.dart';
+import 'package:arunika/screens/splash_screen.dart';
+import 'package:arunika/services/notification_service.dart';
+import 'package:arunika/services/session_manager.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
 void main() async {

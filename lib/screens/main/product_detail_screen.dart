@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:aromaku/models/perfume.dart';
-import 'package:aromaku/services/session_manager.dart'; 
-import 'package:aromaku/db/database_helper.dart'; 
+import 'package:arunika/models/perfume.dart';
+import 'package:arunika/services/session_manager.dart'; 
+import 'package:arunika/db/database_helper.dart'; 
 import 'package:intl/intl.dart'; 
 
 class ProductDetailScreen extends StatelessWidget {

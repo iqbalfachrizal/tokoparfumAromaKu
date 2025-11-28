@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:aromaku/api/api_service.dart';
-import 'package:aromaku/models/perfume.dart';
-import 'package:aromaku/screens/main/product_detail_screen.dart';
-import 'package:aromaku/services/location_service.dart';
+import 'package:arunika/api/api_service.dart';
+import 'package:arunika/models/perfume.dart';
+import 'package:arunika/screens/main/product_detail_screen.dart';
+import 'package:arunika/services/location_service.dart';
 import 'package:intl/intl.dart'; 
 
 class ProductListScreen extends StatefulWidget {
@@ -119,7 +119,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AromaKu'),
+        title: const Text('arunika'),
         centerTitle: true,
       ),
       body: RefreshIndicator(

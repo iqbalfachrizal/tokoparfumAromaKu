@@ -1,4 +1,4 @@
-import 'package:aromaku/models/perfume.dart';
+import 'package:arunika/models/perfume.dart';
 
 class CartItem {
   final Perfume perfume;

@@ -21,10 +21,10 @@ class NotificationService {
         null, 
         [
           NotificationChannel(
-            channelGroupKey: 'aromaku_group', 
+            channelGroupKey: 'arunika_group', 
             channelKey: 'pesanan_channel',
-            channelName: 'Notifikasi AromaKu', 
-            channelDescription: 'Channel untuk semua notifikasi aplikasi AromaKu',
+            channelName: 'Notifikasi arunika', 
+            channelDescription: 'Channel untuk semua notifikasi aplikasi arunika',
             defaultColor: Colors.purple,
             ledColor: Colors.purple,
             importance: NotificationImportance.High,
@@ -35,7 +35,7 @@ class NotificationService {
         channelGroups: [
           NotificationChannelGroup(
               channelGroupKey: 'aromaloca_group',
-              channelGroupName: 'Grup Notifikasi AromaKu'),
+              channelGroupName: 'Grup Notifikasi arunika'),
         ],
         debug: true);
   }

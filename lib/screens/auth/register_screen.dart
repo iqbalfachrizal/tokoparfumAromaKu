@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:aromaku/db/database_helper.dart';
-import 'package:aromaku/models/user.dart';
+import 'package:arunika/db/database_helper.dart';
+import 'package:arunika/models/user.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

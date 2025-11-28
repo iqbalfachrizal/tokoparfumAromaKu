@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:aromaku/models/user.dart';
-import 'package:aromaku/services/encryption_service.dart';
+import 'package:arunika/models/user.dart';
+import 'package:arunika/services/encryption_service.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -20,7 +20,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'perfume_app.db');
     return await openDatabase(
       path,
-      version: 2, // Versi 2 untuk memastikan tabel cart ada
+      version: 3, // UPDATE VERSION
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -32,15 +32,21 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         email TEXT UNIQUE,
-        password TEXT
+        password TEXT,
+        photo TEXT
       )
     ''');
+
     await _createCartTable(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await _createCartTable(db);
+    }
+
+    if (oldVersion < 3) {
+      await db.execute("ALTER TABLE users ADD COLUMN photo TEXT");
     }
   }
 
@@ -57,17 +63,17 @@ class DatabaseHelper {
     ''');
   }
 
-  // --- FUNGSI USER ---
+  // --- USER FUNCTIONS ---
   Future<int> registerUser(User user) async {
     final db = await database;
     try {
       String hashedPassword = EncryptionService.hashPassword(user.password);
-      User userToSave = User(
+      User u = User(
         name: user.name,
         email: user.email,
-        password: hashedPassword
+        password: hashedPassword,
       );
-      return await db.insert('users', userToSave.toMap(), conflictAlgorithm: ConflictAlgorithm.abort);
+      return await db.insert('users', u.toMap(), conflictAlgorithm: ConflictAlgorithm.abort);
     } catch (e) {
       return -1;
     }
@@ -76,32 +82,62 @@ class DatabaseHelper {
   Future<User?> loginUser(String email, String password) async {
     final db = await database;
     String hashedPassword = EncryptionService.hashPassword(password);
+
     List<Map<String, dynamic>> maps = await db.query(
       'users',
       where: 'email = ? AND password = ?',
       whereArgs: [email, hashedPassword],
     );
 
-    if (maps.isNotEmpty) {
-      return User.fromMap(maps.first);
-    }
+    if (maps.isNotEmpty) return User.fromMap(maps.first);
     return null;
   }
+
   Future<User?> getUserById(int id) async {
-      final db = await database;
-      List<Map<String, dynamic>> maps = await db.query(
-          'users',
-          where: 'id = ?',
-          whereArgs: [id],
-      );
-      if (maps.isNotEmpty) {
-          return User.fromMap(maps.first);
-      }
-      return null;
+    final db = await database;
+    List<Map<String, dynamic>> maps = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (maps.isNotEmpty) return User.fromMap(maps.first);
+    return null;
   }
 
-  // --- FUNGSI KERANJANG (CART) ---
+  // 🔵 UPDATE FOTO
+  Future<int> updateUserPhoto(int id, String photoPath) async {
+    final db = await database;
+    return await db.update(
+      'users',
+      {'photo': photoPath},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 
+  // 🔵 UPDATE NAMA + EMAIL + PASSWORD OPSIONAL
+  Future<int> updateUserProfile(int id, String name, String email, String? newPassword) async {
+    final db = await database;
+
+    Map<String, dynamic> updates = {
+      'name': name,
+      'email': email,
+    };
+
+    if (newPassword != null && newPassword.isNotEmpty) {
+      updates['password'] = EncryptionService.hashPassword(newPassword);
+    }
+
+    return await db.update(
+      'users',
+      updates,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // --- CART OMITTED (tidak diubah)
   Future<void> upsertCartItem(int userId, int productId) async {
     final db = await database;
     final List<Map<String, dynamic>> existing = await db.query(
@@ -127,7 +163,6 @@ class DatabaseHelper {
     }
   }
 
-  // --- FUNGSI MEMPERBARUI KUANTITAS SECARA EKSPLISIT ---
   Future<int> updateCartItemQuantity(int userId, int productId, int quantity) async {
     final db = await database;
     return await db.update(

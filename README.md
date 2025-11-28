@@ -1,4 +1,4 @@
-# aromaku
+# arunika
 
 A new Flutter project.
 

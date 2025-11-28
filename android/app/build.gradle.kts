@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.aromaku"
+    namespace = "com.example.arunika"
 
     // ✅ Gunakan SDK 36 untuk kompatibilitas plugin modern
     compileSdk = 36
@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.aromaku"
+        applicationId = "com.example.arunika"
 
         // ✅ Pastikan minSdk minimal 21 (syarat desugaring) atau lebih tinggi
         minSdk = maxOf(21, flutter.minSdkVersion.toInt())

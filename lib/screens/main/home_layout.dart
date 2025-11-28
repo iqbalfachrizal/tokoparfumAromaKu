@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:aromaku/screens/main/cart_screen.dart';
-import 'package:aromaku/screens/main/feedback_screen.dart';
-import 'package:aromaku/screens/main/profile_screen.dart';
-import 'package:aromaku/screens/main/product_list_screen.dart'; 
+import 'package:arunika/screens/main/cart_screen.dart';
+import 'package:arunika/screens/main/feedback_screen.dart';
+import 'package:arunika/screens/main/profile_screen.dart';
+import 'package:arunika/screens/main/product_list_screen.dart'; 
 
 class HomeLayout extends StatefulWidget {
   const HomeLayout({super.key});
