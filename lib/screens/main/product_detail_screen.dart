@@ -18,15 +18,28 @@ class ProductDetailScreen extends StatelessWidget {
       await DatabaseHelper().upsertCartItem(userId, perfume.id);
 
       if (context.mounted) {
-        // --- LOGIKA SNACKBAR (POSISI TENGAH) ---
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              '✅ ${perfume.name} ditambahkan ke keranjang!',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            content: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check, color: Colors.green, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '${perfume.name} ditambahkan ke keranjang!',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
-            backgroundColor: Colors.purple.shade700,
+            backgroundColor: Colors.green.shade600,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
             margin: EdgeInsets.only(
@@ -34,10 +47,9 @@ class ProductDetailScreen extends StatelessWidget {
               left: 20,
               right: 20,
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           ),
         );
-        // ---------------------------------------------
       }
     } catch (e) {
       if (context.mounted) {
@@ -51,16 +63,33 @@ class ProductDetailScreen extends StatelessWidget {
     }
   }
 
-  // --- WIDGET HELPER UNTUK CHIP TAG ---
   Widget _buildTagChips(List<String> tags) {
     return Wrap(
-      spacing: 6.0,
-      runSpacing: 6.0,
-      children: tags.map((tag) => Chip(
-        label: Text(tag, style: const TextStyle(fontSize: 13, color: Colors.white)),
-        backgroundColor: Colors.purple.shade400,
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      spacing: 8.0,
+      runSpacing: 8.0,
+      children: tags.map((tag) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.purple.shade300, Colors.deepPurple.shade500],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.purple.shade200,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          tag,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       )).toList(),
     );
   }
@@ -68,141 +97,319 @@ class ProductDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(perfume.name, overflow: TextOverflow.ellipsis, maxLines: 1),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          // 1. BAGIAN GAMBAR
-          Container(
-            padding: const EdgeInsets.only(top: 10, bottom: 20),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.purple.shade50, // Latar belakang ringan
-            ),
-            child: Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [ // Bayangan elegan
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      spreadRadius: 2,
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.purple.shade100,
+              Colors.purple.shade50,
+              Colors.white,
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            // Header dengan Gambar
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.purple.shade400,
+                    Colors.deepPurple.shade600,
+                  ],
+                ),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.purple.shade200,
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.white),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          const Expanded(
+                            child: Text(
+                              'Detail Produk',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(width: 48), // Balance untuk back button
+                        ],
+                      ),
+                    ),
+                    
+                    // Gambar Produk
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              spreadRadius: 2,
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.network(
+                            perfume.image,
+                            height: 280,
+                            width: double.infinity,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 280,
+                                color: Colors.grey.shade200,
+                                child: const Icon(Icons.broken_image, color: Colors.grey, size: 100),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    perfume.image,
-                    height: 280,
-                    width: 280,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.broken_image, color: Colors.grey, size: 100);
-                    },
-                  ),
+              ),
+            ),
+            
+            // Detail & Deskripsi (Scrollable)
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // NAMA
+                    Text(
+                      perfume.name,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    
+                    // KATEGORI/BRAND
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.purple.shade100, Colors.purple.shade200],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Brand: ${perfume.category}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.deepPurple.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+
+                    // TAGS/AROMA
+                    _buildTagChips(perfume.tags),
+
+                    const SizedBox(height: 25),
+
+                    // DESKRIPSI HEADER
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.purple.shade300, Colors.deepPurple.shade500],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.description, color: Colors.white, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Deskripsi Aroma',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // DESKRIPSI TEXT
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white,
+                            Colors.purple.shade50,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.purple.shade200, width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.purple.shade100,
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        perfume.description,
+                        textAlign: TextAlign.justify,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.6,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 100), // Padding untuk bottomNavigationBar
+                  ],
                 ),
               ),
             ),
-          ),
-          
-          // 2. BAGIAN DETAIL & DESKRIPSI (Scrollable)
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // NAMA & KATEGORI
-                  Text(
-                    perfume.name,
-                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.black87),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Brand: ${perfume.category}',
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
-                  ),
-                  
-                  const SizedBox(height: 15),
-
-                  // TAGS/AROMA
-                  _buildTagChips(perfume.tags),
-
-                  const SizedBox(height: 25),
-
-                  // DESKRIPSI
-                  const Text(
-                    'Deskripsi Aroma:',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    perfume.description,
-                    textAlign: TextAlign.justify,
-                    style: const TextStyle(fontSize: 15, height: 1.6, color: Colors.black54),
-                  ),
-                  
-                  const SizedBox(height: 80), // Padding ekstra sebelum tombol
-                ],
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
       
-      // 3. BAGIAN HARGA & TOMBOL (Fixed di Bawah)
+      // Harga & Tombol (Fixed di Bawah) - DIPERBAIKI AGAR SEJAJAR
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         decoration: BoxDecoration(
-          color: Colors.white,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white,
+              Colors.purple.shade50,
+            ],
+          ),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
+              color: Colors.grey.shade400,
+              blurRadius: 15,
               offset: const Offset(0, -5),
             ),
           ],
         ),
-        child: Row(
-          children: [
-            // HARGA
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Harga Total:',
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-                ),
-                Text(
-                  'Rp ${NumberFormat("#,##0", "id_ID").format(perfume.price)}',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.purple),
-                ),
-              ],
-            ),
-            const SizedBox(width: 20),
-            
-            // TOMBOL
-            Expanded(
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add_shopping_cart, size: 20),
-                label: const Text('Tambah ke Keranjang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                onPressed: () => _addToCart(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple, 
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // HARGA - DIPERBAIKI AGAR SEJAJAR DENGAN TOMBOL
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Harga Total:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Rp ${NumberFormat("#,##0", "id_ID").format(perfume.price)}',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.deepPurple.shade700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            )
-          ],
+              const SizedBox(width: 12),
+              
+              // TOMBOL - DISEJAJARKAN DENGAN HARGA
+              Expanded(
+                flex: 5,
+                child: Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.green.shade400, Colors.green.shade600],
+                    ),
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.shade300,
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add_shopping_cart, size: 20),
+                    label: const Text(
+                      'Tambah',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: () => _addToCart(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
