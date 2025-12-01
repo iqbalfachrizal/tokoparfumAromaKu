@@ -118,72 +118,172 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('arunika'),
-        centerTitle: true,
-      ),
-      body: RefreshIndicator(
-        onRefresh: _fetchAllData,
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              color: Colors.purple.withOpacity(0.1),
-              child: Column( 
-                children: [
-                  Text(
-                    _weatherInfo, 
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.purple, fontWeight: FontWeight.bold)
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.purple.shade50,
+              Colors.white,
+            ],
+          ),
+        ),
+        child: RefreshIndicator(
+          onRefresh: _fetchAllData,
+          child: Column(
+            children: [
+              // Header dengan Gradien
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.purple.shade400,
+                      Colors.deepPurple.shade600,
+                    ],
                   ),
-                  if (_recommendationText.isNotEmpty) 
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(
-                        _recommendationText, 
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.deepPurple, fontStyle: FontStyle.italic)
-                      ),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.purple.shade200,
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
                     ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  labelText: 'Cari (nama, kategori, atau tag cth: fresh)',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(25.0)),
+                  ],
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'arunika',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        
+                        // Weather Info Card
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: Colors.white.withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.cloud, color: Colors.white, size: 20),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      _weatherInfo,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (_recommendationText.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  _recommendationText,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontStyle: FontStyle.italic,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 15),
+                        
+                        // Search Field
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(25),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              hintText: 'Cari parfum...',
+                              hintStyle: TextStyle(color: Colors.grey.shade400),
+                              prefixIcon: const Icon(Icons.search, color: Colors.deepPurple),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _displayedPerfumes.isEmpty
-                      ? const Center(child: Text('Produk tidak ditemukan.'))
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(8.0),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 8.0,
-                            mainAxisSpacing: 8.0,
-                            childAspectRatio: 0.65, 
+              // Products Grid
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _displayedPerfumes.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.search_off, size: 80, color: Colors.grey.shade300),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Produk tidak ditemukan',
+                                  style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+                                ),
+                              ],
+                            ),
+                          )
+                        : GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 0.65,
+                            ),
+                            itemCount: _displayedPerfumes.length,
+                            itemBuilder: (context, index) {
+                              final perfume = _displayedPerfumes[index];
+                              return _buildPerfumeCard(perfume);
+                            },
                           ),
-                          itemCount: _displayedPerfumes.length,
-                          itemBuilder: (context, index) {
-                            final perfume = _displayedPerfumes[index];
-                            return _buildPerfumeCard(perfume);
-                          },
-                        ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -193,22 +293,30 @@ class _ProductListScreenState extends State<ProductListScreen> {
     final tagsToShow = tags.take(2).toList();
     
     return Wrap(
-      spacing: 4.0, 
+      spacing: 4.0,
       runSpacing: 2.0,
-      children: tagsToShow.map((tag) => Chip(
-        label: Text(tag, style: const TextStyle(fontSize: 10, color: Colors.white)),
-        backgroundColor: Colors.purple.shade300,
-        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 0.0),
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      children: tagsToShow.map((tag) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.purple.shade300, Colors.deepPurple.shade400],
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          tag,
+          style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
+        ),
       )).toList(),
     );
   }
 
   Widget _buildPerfumeCard(Perfume perfume) {
-    return Card( 
+    return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: 2.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      shadowColor: Colors.purple.shade100,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -218,58 +326,97 @@ class _ProductListScreenState extends State<ProductListScreen> {
             ),
           );
         },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(8.0),
-                child: Image.network(
-                  perfume.image,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return const Center(child: CircularProgressIndicator(strokeWidth: 2.0));
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.broken_image, color: Colors.grey, size: 40);
-                  },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white,
+                Colors.purple.shade50,
+              ],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Image.network(
+                    perfume.image,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(child: CircularProgressIndicator(strokeWidth: 2.0));
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.broken_image, color: Colors.grey, size: 40);
+                    },
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    perfume.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  _buildTagChips(perfume.tags),
-                  const SizedBox(height: 4),
-                  Text(
-                    perfume.category,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Rp ${NumberFormat("#,##0", "id_ID").format(perfume.price)}', 
-                    style: const TextStyle(color: Colors.purple, fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ],
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      perfume.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    _buildTagChips(perfume.tags),
+                    const SizedBox(height: 6),
+                    Text(
+                      perfume.category,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.purple.shade400, Colors.deepPurple.shade600],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Rp ${NumberFormat("#,##0", "id_ID").format(perfume.price)}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ); 
-  } 
+    );
+  }
 }
