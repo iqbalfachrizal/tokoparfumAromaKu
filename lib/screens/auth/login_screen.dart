@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   final LocalAuthentication auth = LocalAuthentication();
   bool _canCheckBiometrics = false;
@@ -28,26 +29,15 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // Panggil kedua operasi untuk mengisi _canCheckBiometrics dan _fingerprintEnabled
     _checkBiometrics(); 
     _loadFingerprintStatus(); 
   }
 
-  // FUNGSI GABUNGAN: Menggabungkan status dan memicu rebuild UI
   void _updateStatus() {
     if (!mounted) return;
-    
-    // Debugging logs:
-    print("DEBUG 1 - BIOMETRIK SUPPORT: $_canCheckBiometrics");
-    print("DEBUG 2 - FINGERPRINT DIIZINKAN: $_fingerprintEnabled");
-    bool finalResult = _canCheckBiometrics && _fingerprintEnabled;
-    print("DEBUG 3 - TOMBOL TAMPIL JIKA: $finalResult");
-    
-    // Perbarui UI dengan status akhir
     setState(() {});
   }
 
-  // CEK BIOMETRIK
   Future<void> _checkBiometrics() async {
     bool canCheck = false;
     try {
@@ -61,10 +51,8 @@ class _LoginScreenState extends State<LoginScreen> {
     _updateStatus(); 
   }
 
-  // CEK APAKAH FINGERPRINT SUDAH DIAKTIFKAN
   Future<void> _loadFingerprintStatus() async { 
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    // isFingerprintEnabled() mengambil kunci _fingerprintEnabledKey
     bool enabled = prefs.getBool('fingerprint_enabled') ?? false; 
 
     if (!mounted) return;
@@ -72,14 +60,12 @@ class _LoginScreenState extends State<LoginScreen> {
     _updateStatus(); 
   }
 
-  // LOGIN BIOMETRIK
   Future<void> _authenticate() async {
     if (!_canCheckBiometrics || !_fingerprintEnabled) return;
 
     setState(() => _isAuthenticating = true);
 
     try {
-      // 1. Otentikasi Sidik Jari/Biometrik
       final authenticated = await auth.authenticate(
         localizedReason: 'Gunakan sidik jari / wajah untuk login cepat',
         options: const AuthenticationOptions(
@@ -90,9 +76,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       setState(() => _isAuthenticating = false);
 
-      if (!authenticated) return; // Jika otentikasi OS gagal
+      if (!authenticated) return;
 
-      // 2. Ambil email + password yang DISIMPAN
       String? email = await SessionManager().getEmail();
       String? password = await SessionManager().getPassword();
 
@@ -100,10 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Silakan login manual dulu!')),
         );
-        return; // Ini tidak akan terjadi jika logout() tidak menghapus email/pass
+        return;
       }
 
-      // 3. Login ulang ke database menggunakan data yang disimpan
       User? user = await DatabaseHelper().loginUser(email, password);
 
       if (user == null) {
@@ -113,10 +97,8 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // 4. RE-ESTABLISH SESSION DATA (Perbaikan Utama)
-      // Panggil fungsi saveLoginData untuk mengatur isLoggedIn = true dan menyimpan userId
       await SessionManager().saveLoginData(
-        user.id!, // Menggunakan ID yang didapat dari database
+        user.id!,
         email,
         password,
       );
@@ -140,7 +122,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // LOGIN MANUAL
   void _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -154,14 +135,12 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (user != null) {
-      // 1. Simpan login, ID, dan aktifkan fingerprint
       await SessionManager().saveLoginData(
         user.id!,
         _emailController.text,
         _passwordController.text,
       );
       
-      // 2. Muat ulang status
       _loadFingerprintStatus(); 
 
       if (!mounted) return;
@@ -179,99 +158,257 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ... (widget build() sama seperti sebelumnya) ...
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.auto_awesome, size: 80, color: Colors.purple),
-                const SizedBox(height: 20),
-
-                const Text(
-                  'Selamat Datang di Arunika',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.purple.shade400,
+              Colors.deepPurple.shade600,
+              Colors.indigo.shade700,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Card(
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-
-                const SizedBox(height: 30),
-
-                // TOMBOL FINGERPRINT
-                if (_canCheckBiometrics && _fingerprintEnabled) 
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10, bottom: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Form(
+                    key: _formKey,
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        _isAuthenticating
-                          ? const CircularProgressIndicator() 
-                          : IconButton(
-                              iconSize: 60,
-                              icon: Icon(Icons.fingerprint,
-                                  color: Colors.purple.shade700),
-                              onPressed: _authenticate,
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.purple.shade300, Colors.deepPurple.shade500],
                             ),
-                        const Text("Login dengan Fingerprint"),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.auto_awesome, size: 60, color: Colors.white),
+                        ),
                         const SizedBox(height: 20),
-                        const Divider(height: 1, thickness: 1), 
+
+                        const Text(
+                          'Selamat Datang',
+                          style: TextStyle(
+                            fontSize: 28, 
+                            fontWeight: FontWeight.bold,
+                            color: Colors.deepPurple,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Login ke Arunika',
+                          style: TextStyle(
+                            fontSize: 16, 
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+
                         const SizedBox(height: 30),
+
+                        if (_canCheckBiometrics && _fingerprintEnabled) 
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: Column(
+                              children: [
+                                _isAuthenticating
+                                  ? const CircularProgressIndicator() 
+                                  : InkWell(
+                                      onTap: _authenticate,
+                                      borderRadius: BorderRadius.circular(50),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: LinearGradient(
+                                            colors: [Colors.purple.shade300, Colors.deepPurple.shade500],
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.purple.shade200,
+                                              blurRadius: 15,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.fingerprint,
+                                          size: 50,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  "Login dengan Fingerprint",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Row(
+                                  children: [
+                                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Text(
+                                        'ATAU',
+                                        style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                                      ),
+                                    ),
+                                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                            ),
+                          ),
+
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: const Icon(Icons.email_outlined, color: Colors.deepPurple),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                          ),
+                          validator: (v) =>
+                              (v == null || !v.contains('@')) ? 'Email tidak valid' : null,
+                        ),
+                        const SizedBox(height: 15),
+
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: const Icon(Icons.lock_outline, color: Colors.deepPurple),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                          ),
+                          validator: (v) =>
+                              (v == null || v.isEmpty) ? 'Password wajib diisi' : null,
+                        ),
+                        const SizedBox(height: 25),
+
+                        _isLoading
+                            ? const CircularProgressIndicator()
+                            : Container(
+                                width: double.infinity,
+                                height: 55,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [Colors.purple.shade400, Colors.deepPurple.shade600],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.purple.shade200,
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: _login,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Login',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                        const SizedBox(height: 16),
+
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                            );
+                          },
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle(color: Colors.grey.shade700),
+                              children: const [
+                                TextSpan(text: 'Belum punya akun? '),
+                                TextSpan(
+                                  text: 'Daftar',
+                                  style: TextStyle(
+                                    color: Colors.deepPurple,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                
-                if (!_canCheckBiometrics || !_fingerprintEnabled)
-                  const SizedBox(height: 20),
-
-
-                // EMAIL
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) =>
-                      (v == null || !v.contains('@')) ? 'Email tidak valid' : null,
                 ),
-                const SizedBox(height: 15),
-
-                // PASSWORD
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Password wajib diisi' : null,
-                ),
-                const SizedBox(height: 20),
-
-                // BUTTON LOGIN
-                _isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: _login,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
-                          minimumSize: const Size(double.infinity, 50),
-                        ),
-                        child: const Text('Login'),
-                      ),
-
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                    );
-                  },
-                  child: const Text('Belum punya akun? Daftar'),
-                ),
-              ],
+              ),
             ),
           ),
         ),
