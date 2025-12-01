@@ -52,67 +52,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // POPUP UNTUK EDIT NAMA/EMAIL/PASSWORD (DENGAN IKON MATA)
   void _openEditProfileDialog() {
     final _editFormKey = GlobalKey<FormState>();
     TextEditingController nameC = TextEditingController(text: _currentUser!.name);
     TextEditingController emailC = TextEditingController(text: _currentUser!.email);
     TextEditingController passC = TextEditingController();
     
-    // Variabel untuk mengontrol visibilitas password
     bool _isPasswordVisible = false;
 
     showDialog(
       context: context,
-      // Menggunakan StatefulBuilder untuk mengelola state visibility di dalam AlertDialog
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text("Edit Profil"),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.purple.shade300, Colors.deepPurple.shade500],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text("Edit Profil"),
+                ],
+              ),
               content: SingleChildScrollView(
                 child: Form(
                   key: _editFormKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // NAMA
                       TextFormField(
                         controller: nameC,
-                        decoration: const InputDecoration(labelText: "Nama"),
+                        decoration: InputDecoration(
+                          labelText: "Nama",
+                          prefixIcon: const Icon(Icons.person, color: Colors.deepPurple),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                          ),
+                        ),
                         validator: (v) => (v == null || v.isEmpty) ? 'Nama wajib diisi' : null,
                       ),
+                      const SizedBox(height: 12),
                       
-                      // EMAIL
                       TextFormField(
                         controller: emailC,
-                        decoration: const InputDecoration(labelText: "Email"),
+                        decoration: InputDecoration(
+                          labelText: "Email",
+                          prefixIcon: const Icon(Icons.email, color: Colors.deepPurple),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                          ),
+                        ),
                         validator: (v) => 
                           (v == null || !v.contains('@')) ? 'Email tidak valid' : null,
                       ),
+                      const SizedBox(height: 12),
                       
-                      // PASSWORD BARU (DENGAN ICON MATA)
                       TextFormField(
                         controller: passC,
-                        // Menentukan apakah teks harus disembunyikan
                         obscureText: !_isPasswordVisible, 
                         decoration: InputDecoration(
                           labelText: "Password Baru (opsional)",
-                          // Menambahkan IconButton di akhir field
+                          prefixIcon: const Icon(Icons.lock, color: Colors.deepPurple),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              // Mengganti ikon berdasarkan state
                               _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                              color: Colors.grey,
                             ),
                             onPressed: () {
-                              // Mengubah state visibility saat tombol ditekan
                               setState(() {
                                 _isPasswordVisible = !_isPasswordVisible;
                               });
                             },
                           ),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                          ),
                         ),
-                        // Validasi wajib diisi (seperti permintaan sebelumnya)
                         validator: (v) => (v == null || v.isEmpty) ? 'Password Baru wajib diisi' : null, 
                       ),
                     ],
@@ -122,29 +152,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text("Batal"),
+                  child: const Text("Batal", style: TextStyle(color: Colors.grey)),
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (!_editFormKey.currentState!.validate()) {
-                      return; 
-                    }
-                    
-                    // Proses password (mengubah string kosong menjadi null)
-                    String? newPassword = passC.text.trim().isEmpty ? null : passC.text.trim();
-                    
-                    await DatabaseHelper().updateUserProfile(
-                      _currentUser!.id!,
-                      nameC.text,
-                      emailC.text,
-                      newPassword,
-                    );
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.purple.shade400, Colors.deepPurple.shade600],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (!_editFormKey.currentState!.validate()) {
+                        return; 
+                      }
+                      
+                      String? newPassword = passC.text.trim().isEmpty ? null : passC.text.trim();
+                      
+                      await DatabaseHelper().updateUserProfile(
+                        _currentUser!.id!,
+                        nameC.text,
+                        emailC.text,
+                        newPassword,
+                      );
 
-                    Navigator.pop(dialogContext);
-                    _loadUserData();
-                  },
-                  child: const Text("Simpan"),
-                )
+                      Navigator.pop(dialogContext);
+                      _loadUserData();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                    ),
+                    child: const Text("Simpan", style: TextStyle(color: Colors.white)),
+                  ),
+                ),
               ],
             );
           },
@@ -153,7 +194,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ... (Fungsi _logout dan Widget build() lainnya tetap sama) ...
   Future<void> _logout() async {
     await _notificationService.scheduleFinalNotification(
       'Sampai Jumpa!',
@@ -175,113 +215,344 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil Saya'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: _currentUser != null ? _openEditProfileDialog : null, 
-          )
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _currentUser == null
-              ? const Center(child: Text('Gagal memuat data user.'))
-              : ListView(
-                  padding: const EdgeInsets.all(16.0),
-                  children: [
-                    Center(
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 50,
-                            backgroundImage: _currentUser!.photo == null
-                                ? const NetworkImage(
-                                      'https://cdn.pixabay.com/photo/2018/05/02/00/49/man-3367459_1280.png')
-                                : FileImage(File(_currentUser!.photo!)) as ImageProvider,
-                            backgroundColor: Colors.grey[200],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.purple.shade50,
+              Colors.white,
+            ],
+          ),
+        ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _currentUser == null
+                ? const Center(child: Text('Gagal memuat data user.'))
+                : Column(
+                    children: [
+                      // Header dengan Gradien
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.purple.shade400,
+                              Colors.deepPurple.shade600,
+                            ],
                           ),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(30),
+                            bottomRight: Radius.circular(30),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.purple.shade200,
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Profil Saya',
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, color: Colors.white),
+                                      onPressed: _openEditProfileDialog,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                
+                                // Avatar
+                                Stack(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white, width: 4),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.2),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 5),
+                                          ),
+                                        ],
+                                      ),
+                                      child: CircleAvatar(
+                                        radius: 60,
+                                        backgroundImage: _currentUser!.photo == null
+                                            ? const NetworkImage(
+                                                  'https://cdn.pixabay.com/photo/2018/05/02/00/49/man-3367459_1280.png')
+                                            : FileImage(File(_currentUser!.photo!)) as ImageProvider,
+                                        backgroundColor: Colors.grey[200],
+                                      ),
+                                    ),
 
-                          // BUTTON EDIT FOTO
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  builder: (_) => Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      ListTile(
-                                        leading: const Icon(Icons.camera_alt),
-                                        title: const Text("Ambil dari Kamera"),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: GestureDetector(
                                         onTap: () {
-                                          Navigator.pop(context);
-                                          _pickImage(true);
+                                          showModalBottomSheet(
+                                            context: context,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.only(
+                                                topLeft: Radius.circular(20),
+                                                topRight: Radius.circular(20),
+                                              ),
+                                            ),
+                                            builder: (_) => Container(
+                                              padding: const EdgeInsets.all(20),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  ListTile(
+                                                    leading: Container(
+                                                      padding: const EdgeInsets.all(8),
+                                                      decoration: BoxDecoration(
+                                                        gradient: LinearGradient(
+                                                          colors: [Colors.purple.shade300, Colors.deepPurple.shade500],
+                                                        ),
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                      child: const Icon(Icons.camera_alt, color: Colors.white),
+                                                    ),
+                                                    title: const Text("Ambil dari Kamera"),
+                                                    onTap: () {
+                                                      Navigator.pop(context);
+                                                      _pickImage(true);
+                                                    },
+                                                  ),
+                                                  ListTile(
+                                                    leading: Container(
+                                                      padding: const EdgeInsets.all(8),
+                                                      decoration: BoxDecoration(
+                                                        gradient: LinearGradient(
+                                                          colors: [Colors.purple.shade300, Colors.deepPurple.shade500],
+                                                        ),
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                      child: const Icon(Icons.photo, color: Colors.white),
+                                                    ),
+                                                    title: const Text("Pilih dari Galeri"),
+                                                    onTap: () {
+                                                      Navigator.pop(context);
+                                                      _pickImage(false);
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
                                         },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [Colors.purple.shade300, Colors.deepPurple.shade500],
+                                            ),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: Colors.white, width: 2),
+                                          ),
+                                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                                        ),
                                       ),
-                                      ListTile(
-                                        leading: const Icon(Icons.photo),
-                                        title: const Text("Pilih dari Galeri"),
-                                        onTap: () {
-                                          Navigator.pop(context);
-                                          _pickImage(false);
-                                        },
-                                      ),
-                                    ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _currentUser!.name,
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
                                   ),
-                                );
-                              },
-                              child: const CircleAvatar(
-                                radius: 20,
-                                backgroundColor: Colors.purple,
-                                child: Icon(Icons.camera_alt, color: Colors.white),
-                              ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _currentUser!.email,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 20),
+                      // Content
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.all(20),
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white,
+                                    Colors.purple.shade50,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.purple.shade100,
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(16),
+                                leading: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Colors.purple.shade300, Colors.deepPurple.shade500],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.person, color: Colors.white),
+                                ),
+                                title: const Text(
+                                  'Nama',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    _currentUser!.name,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
 
-                    Card(
-                      elevation: 2.0,
-                      child: ListTile(
-                        leading: const Icon(Icons.person, color: Colors.purple),
-                        title: const Text('Nama', style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(_currentUser!.name, style: const TextStyle(fontSize: 16)),
+                            const SizedBox(height: 12),
+
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white,
+                                    Colors.purple.shade50,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.purple.shade100,
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(16),
+                                leading: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Colors.purple.shade300, Colors.deepPurple.shade500],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.email, color: Colors.white),
+                                ),
+                                title: const Text(
+                                  'Email',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    _currentUser!.email,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 30),
+
+                            Container(
+                              height: 55,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Colors.red.shade400, Colors.red.shade600],
+                                ),
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.red.shade200,
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton.icon(
+                                onPressed: _logout,
+                                icon: const Icon(Icons.logout, size: 24),
+                                label: const Text(
+                                  'Logout',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    Card(
-                      elevation: 2.0,
-                      child: ListTile(
-                        leading: const Icon(Icons.email, color: Colors.purple),
-                        title: const Text('Email', style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(_currentUser!.email, style: const TextStyle(fontSize: 16)),
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    ElevatedButton.icon(
-                      onPressed: _logout,
-                      icon: const Icon(Icons.logout),
-                      label: const Text('Logout'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        textStyle: const TextStyle(fontSize: 18),
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+      ),
     );
   }
 }
